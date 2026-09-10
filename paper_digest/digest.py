@@ -238,7 +238,7 @@ def filter_papers(
             sort_by=_effective_sort_mode(feed.sort_by, ranking.sort_by),
         )
     )
-    return filtered[: feed.max_items]
+    return filtered[: max(feed.max_items * 4, 40)]
 
 
 def finalize_digest_scoring(digest: DigestRun, *, ranking: RankingConfig) -> None:
