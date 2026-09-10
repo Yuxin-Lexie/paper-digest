@@ -1,0 +1,57 @@
+[app]
+timezone = "Asia/Shanghai"
+lookback_hours = 240
+output_dir = "output"
+request_delay_seconds = 3
+request_timeout_seconds = 60
+fetch_retry_attempts = 4
+fetch_retry_backoff_seconds = 10
+
+[state]
+enabled = false
+path = ".paper-digest-state/state.json"
+retention_days = 90
+
+[feedback]
+enabled = false
+path = ".paper-digest-state/feedback.json"
+star_boost = 80
+follow_up_boost = 35
+reading_boost = 18
+done_penalty = 20
+ignore_penalty = 120
+hide_ignored = true
+
+[analysis]
+enabled = false
+provider = "openai"
+model = "gpt-5-mini"
+api_key_env = "OPENAI_API_KEY"
+base_url = "https://api.openai.com/v1/responses"
+timeout_seconds = 60
+max_papers = 8
+max_output_tokens = 600
+language = "English"
+reasoning_effort = "minimal"
+fail_on_error = true
+
+[translation]
+enabled = false
+provider = "argos"
+model_path = ".paper-digest-models/argos-en-zh-1.9"
+max_papers = 24
+max_summary_chars = 600
+fail_on_error = false
+
+[[feeds]]
+name = "Time Use Test"
+source = "openalex"
+queries = [
+  "time use",
+  "time poverty"
+]
+types = ["article"]
+keywords = []
+exclude_keywords = []
+max_results = 30
+max_items = 10
