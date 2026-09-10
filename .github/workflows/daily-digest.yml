@@ -71,20 +71,13 @@ jobs:
           restore-keys: |
             paper-digest-output-
 
-      - name: Materialize config
-        env:
-          PAPER_DIGEST_CONFIG_TOML: ${{ secrets.PAPER_DIGEST_CONFIG_TOML }}
-          PAPER_DIGEST_CONFIG_TOML_OVERRIDE: ${{ github.event.inputs.config_toml_override }}
+      - name: Check config
         run: |
-          if [ -n "$PAPER_DIGEST_CONFIG_TOML_OVERRIDE" ]; then
-            printf '%s\n' "$PAPER_DIGEST_CONFIG_TOML_OVERRIDE" > config.toml
-            exit 0
-          fi
-          if [ -z "$PAPER_DIGEST_CONFIG_TOML" ]; then
-            echo "Missing PAPER_DIGEST_CONFIG_TOML repository secret." >&2
+          if [ ! -f config_example_lexie0910.toml ]; then
+            echo "config_example_lexie0910.toml not found." >&2
             exit 1
           fi
-          printf '%s\n' "$PAPER_DIGEST_CONFIG_TOML" > config.toml
+          echo "Using config_example_lexie0910.toml from repository."
 
       - name: Cache translation model
         uses: actions/cache@v5
