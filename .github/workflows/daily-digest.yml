@@ -73,11 +73,11 @@ jobs:
 
       - name: Check config
         run: |
-          if [ ! -f config_example_lexie0910.toml ]; then
-            echo "config_example_lexie0910.toml not found." >&2
+          if [ ! -f config.toml ]; then
+            echo "config.toml not found." >&2
             exit 1
           fi
-          echo "Using config_example_lexie0910.toml from repository."
+          echo "Using config.toml from repository."
 
       - name: Cache translation model
         uses: actions/cache@v5
