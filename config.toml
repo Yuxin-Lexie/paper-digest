@@ -35,13 +35,6 @@ language = "Chinese"
 reasoning_effort = "low"
 fail_on_error = true
 
-timeout_seconds = 60
-max_papers = 8
-max_output_tokens = 600
-language = "English"
-reasoning_effort = "minimal"
-fail_on_error = true
-
 [translation]
 enabled = false
 provider = "argos"
