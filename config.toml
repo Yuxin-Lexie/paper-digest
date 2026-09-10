@@ -24,10 +24,16 @@ hide_ignored = true
 
 [analysis]
 enabled = true
-provider = "deepseek"
-model = "deepseek-chat"
+provider = "openai"
+model = "deepseek-v4-flash"
 api_key_env = "DEEPSEEK_API_KEY"
+base_url = "https://api.deepseek.com/responses"
+timeout_seconds = 60
+max_papers = 8
+max_output_tokens = 800
 language = "Chinese"
+reasoning_effort = "low"
+fail_on_error = true
 
 timeout_seconds = 60
 max_papers = 8
