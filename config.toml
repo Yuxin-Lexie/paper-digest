@@ -23,11 +23,12 @@ ignore_penalty = 120
 hide_ignored = true
 
 [analysis]
-enabled = false
-provider = "openai"
-model = "gpt-5-mini"
-api_key_env = "OPENAI_API_KEY"
-base_url = "https://api.openai.com/v1/responses"
+enabled = true
+provider = "deepseek"
+model = "deepseek-chat"
+api_key_env = "DEEPSEEK_API_KEY"
+language = "Chinese"
+
 timeout_seconds = 60
 max_papers = 8
 max_output_tokens = 600
