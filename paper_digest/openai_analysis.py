@@ -87,19 +87,19 @@ def _build_instructions(
             " Prefer newsroom-style phrasing that reads naturally in a Chinese daily"
             " research briefing."
         )
-        return (
-    "You are writing concise research-digest notes. "
-    "Use only the provided title, metadata, and abstract. "
-    "Do not invent empirical claims or missing details. "
-    "If the abstract does not support a point, say so cautiously. "
-    f"Write every field in {config.language}. "
-    "Keep each field compact and useful for a daily paper digest. "
-    "Return JSON only. Do not use Markdown code fences, headings, "
-    "explanatory text, or any text outside the JSON object. "
-    "The JSON object must contain exactly these fields: "
-    "conclusion, contributions, audience, limitations."
-    f"{template_hint}"
-)
+
+    return (
+        "You are writing concise research-digest notes. "
+        "Use only the provided title, metadata, and abstract. "
+        "Do not invent empirical claims or missing details. "
+        "If the abstract does not support a point, say so cautiously. "
+        f"Write every field in {config.language}. "
+        "Keep each field compact and useful for a daily paper digest. "
+        "Return JSON only. Do not use Markdown code fences, headings, "
+        "explanatory text, or any text outside the JSON object. "
+        "The JSON object must contain exactly these fields: "
+        "conclusion, contributions, audience, limitations."
+        f"{template_hint}"
     )
 
 
