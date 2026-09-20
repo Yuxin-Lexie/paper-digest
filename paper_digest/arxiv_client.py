@@ -61,6 +61,9 @@ class Paper:
     updated_at: datetime
     source: str = "arxiv"
     date_label: str = "Published"
+    journal_name: str | None = None
+    journal_id: str | None = None
+    journal_issn: str | None = None
     translation: PaperTranslation | None = None
     analysis: PaperAnalysis | None = None
     tags: list[str] = field(default_factory=list)
