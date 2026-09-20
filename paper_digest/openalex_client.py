@@ -105,6 +105,22 @@ def parse_openalex_work(item: dict[str, object]) -> Paper | None:
     short_id = _openalex_short_id(work_id)
     title = _string(item.get("display_name")) or _string(item.get("title")) or short_id
 
+    journal_name = _nested_string(
+        item.get("primary_location"),
+        "source",
+        "display_name",
+    )
+    journal_id = _nested_string(
+        item.get("primary_location"),
+        "source",
+        "id",
+    )
+    journal_issn = _nested_string(
+        item.get("primary_location"),
+        "source",
+        "issn_l",
+    )
+
     return Paper(
         title=title,
         summary=_reconstruct_abstract(item.get("abstract_inverted_index")),
@@ -117,6 +133,9 @@ def parse_openalex_work(item: dict[str, object]) -> Paper | None:
         updated_at=published_at,
         source="openalex",
         date_label="Published",
+        journal_name=journal_name,
+        journal_id=journal_id,
+        journal_issn=journal_issn,
         doi=_string(item.get("doi")),
         source_urls={"openalex": work_id},
     )
