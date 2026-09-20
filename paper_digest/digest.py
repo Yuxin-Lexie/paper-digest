@@ -345,6 +345,8 @@ def _render_default_markdown(digest: DigestRun) -> str:
             lines.append(f"   - {paper.date_label}: {published}")
             lines.append(f"   - Authors: {authors}")
             lines.append(f"   - Source: {paper.source_label()}")
+            if paper.journal_name:
+                lines.append(f"   - Journal: {paper.journal_name}")
             feedback = feedback_label(paper.feedback_status)
             if feedback is not None:
                 lines.append(f"   - Feedback: {feedback}")
@@ -468,6 +470,8 @@ def _render_zh_daily_brief(digest: DigestRun) -> str:
             lines.append(f"   - {paper.date_label}：{published}")
             lines.append(f"   - 作者：{authors}")
             lines.append(f"   - 来源：{paper.source_label()}")
+            if paper.journal_name:
+                lines.append(f"   - 期刊：{paper.journal_name}")
             feedback = feedback_label_zh(paper.feedback_status)
             if feedback is not None:
                 lines.append(f"   - 反馈状态：{feedback}")
