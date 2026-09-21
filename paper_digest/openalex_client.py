@@ -120,6 +120,16 @@ def parse_openalex_work(item: dict[str, object]) -> Paper | None:
         "source",
         "issn_l",
     )
+    journal_is_core = _nested_bool(
+    item.get("primary_location"),
+    "source",
+    "is_core",
+    )
+    journal_is_in_doaj = _nested_bool(
+        item.get("primary_location"),
+        "source",
+        "is_in_doaj",
+    )
 
     return Paper(
         title=title,
@@ -136,6 +146,8 @@ def parse_openalex_work(item: dict[str, object]) -> Paper | None:
         journal_name=journal_name,
         journal_id=journal_id,
         journal_issn=journal_issn,
+        journal_is_core=journal_is_core,
+        journal_is_in_doaj=journal_is_in_doaj,
         doi=_string(item.get("doi")),
         source_urls={"openalex": work_id},
     )
@@ -263,6 +275,16 @@ def _nested_string(value: object, *path: str) -> str | None:
             return None
         current = current.get(key)
     return _string(current)
+
+def _nested_bool(value: object, *path: str) -> bool | None:
+    current = value
+    for key in path:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+    if isinstance(current, bool):
+        return current
+    return None
 
 
 def _openalex_short_id(value: str) -> str:
