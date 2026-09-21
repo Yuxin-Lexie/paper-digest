@@ -64,6 +64,8 @@ class Paper:
     journal_name: str | None = None
     journal_id: str | None = None
     journal_issn: str | None = None
+    journal_is_core: bool | None = None
+    journal_is_in_doaj: bool | None = None
     translation: PaperTranslation | None = None
     analysis: PaperAnalysis | None = None
     tags: list[str] = field(default_factory=list)
