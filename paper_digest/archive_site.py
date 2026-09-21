@@ -2986,6 +2986,12 @@ def _render_feed_card(
             f'<a href="{escape(link_prefix + item.detail_href)}">'
             f"{escape(item.title)}</a>"
             + (
+                f'<div class="paper-inline-meta">'
+                f'期刊：{escape(item.journal_name)}</div>'
+                if item.journal_name
+                else ""
+                )
+            + (
                 (
                     '<span class="paper-inline-meta">'
                     f" · Score {item.relevance_score}</span>"
