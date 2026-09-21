@@ -51,6 +51,9 @@ class PaperArchive:
     pdf_url: str | None
     doi: str | None
     arxiv_id: str | None
+    journal_name: str | None
+    journal_id: str | None
+    journal_issn: str | None
     authors: list[str]
     categories: list[str]
     tags: list[str]
@@ -518,6 +521,9 @@ def _parse_papers(
                 pdf_url=_optional_clean_string(raw_paper.get("pdf_url")),
                 doi=_optional_clean_string(raw_paper.get("doi")),
                 arxiv_id=_optional_clean_string(raw_paper.get("arxiv_id")),
+                journal_name=_optional_clean_string(raw_paper.get("journal_name")),
+                journal_id=_optional_clean_string(raw_paper.get("journal_id")),
+                journal_issn=_optional_clean_string(raw_paper.get("journal_issn")),
                 authors=_normalize_string_list(raw_paper.get("authors", [])),
                 categories=_normalize_string_list(raw_paper.get("categories", [])),
                 tags=_normalize_string_list(raw_paper.get("tags", [])),
