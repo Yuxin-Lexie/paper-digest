@@ -10,6 +10,10 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import cast
 from zoneinfo import ZoneInfo
+from .openai_analysis import (
+    OpenAIAnalysisError,
+    judge_paper_relevance_with_openai,
+)
 
 from .analysis import apply_digest_briefing, enrich_digest_with_analysis
 from .arxiv_client import Paper, PaperTranslation
@@ -127,6 +131,27 @@ def generate_digest(
             lookback_hours=config.lookback_hours,
             ranking=config.ranking,
         )
+
+if config.analysis is not None:
+    research_interests = (
+        f"Feed name: {feed.name}\n"
+        f"Search queries: {', '.join(feed.queries)}\n"
+        f"Broad retrieval keywords: {', '.join(feed.keywords)}"
+    )
+
+    for paper in filtered:
+        try:
+            relevance = judge_paper_relevance_with_openai(
+                config.analysis,
+                paper,
+                research_interests=research_interests,
+            )
+            paper.semantic_relevance_score = relevance.score
+            paper.semantic_relevance_reason = relevance.reason
+        except OpenAIAnalysisError:
+            if config.analysis.fail_on_error:
+                raise
+        
         filtered = apply_feedback_to_papers(
             filtered,
             feedback_state=managed_feedback,
