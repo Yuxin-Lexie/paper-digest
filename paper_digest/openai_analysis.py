@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from dataclasses import dataclass
 from urllib.request import Request, urlopen
 
 from .arxiv_client import Paper, PaperAnalysis
@@ -13,6 +14,121 @@ from .config import AnalysisConfig, DigestTemplate
 class OpenAIAnalysisError(RuntimeError):
     """Raised when OpenAI analysis fails."""
 
+@dataclass(slots=True)
+class SemanticRelevance:
+    score: int
+    reason: str
+
+
+def judge_paper_relevance_with_openai(
+    config: AnalysisConfig,
+    paper: Paper,
+    *,
+    research_interests: str,
+) -> SemanticRelevance:
+    """Judge semantic relevance of a paper to the configured research interests."""
+
+    api_key = os.getenv(config.api_key_env)
+    if not api_key:
+        raise OpenAIAnalysisError(
+            f"analysis API key environment variable {config.api_key_env!r} is not set"
+        )
+
+    payload = {
+        "model": config.model,
+        "instructions": (
+            "You are screening academic papers for a research literature recommender. "
+            "Keywords are only a broad retrieval net and MUST NOT be treated as evidence "
+            "that a paper is relevant. Judge substantive semantic relevance from the "
+            "research question, constructs, population, theory, methods, and findings "
+            "described in the title and abstract. "
+            "Ignore accidental keyword overlap, such as a technical paper containing "
+            "'real-time use' when the research interest is human time use. "
+            "A paper may still be relevant even if it does not use exactly the same "
+            "terminology as the research interests. "
+            "Use this scale: "
+            "0 = unrelated or accidental lexical overlap; "
+            "1 = only tangentially related; "
+            "2 = adjacent topic with limited direct relevance; "
+            "3 = clearly relevant; "
+            "4 = highly relevant; "
+            "5 = directly central to the research interest. "
+            f"Write the reason in {config.language}. "
+            "Return JSON only."
+        ),
+        "input": (
+            f"Research interests:\n{research_interests}\n\n"
+            f"{_build_input(paper)}"
+        ),
+        "max_output_tokens": 500,
+        "text": {
+            "format": {
+                "type": "json_schema",
+                "name": "semantic_relevance",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "score": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 5,
+                        },
+                        "reason": {"type": "string"},
+                    },
+                    "required": ["score", "reason"],
+                },
+            }
+        },
+    }
+
+    if config.reasoning_effort != "none":
+        payload["reasoning"] = {"effort": config.reasoning_effort}
+
+    request = Request(
+        config.base_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json; charset=utf-8",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=config.timeout_seconds) as response:
+            raw_payload = response.read()
+    except OSError as exc:
+        raise OpenAIAnalysisError(
+            f"failed to judge relevance for paper {paper.paper_id!r}: {exc}"
+        ) from exc
+
+    response_json = _load_response_json(raw_payload)
+    response_text = _extract_response_text(response_json)
+
+    try:
+        raw_result = json.loads(response_text)
+    except json.JSONDecodeError as exc:
+        raise OpenAIAnalysisError(
+            "semantic relevance response was not valid JSON"
+        ) from exc
+
+    if not isinstance(raw_result, dict):
+        raise OpenAIAnalysisError("semantic relevance payload is invalid")
+
+    score = raw_result.get("score")
+    reason = raw_result.get("reason")
+
+    if not isinstance(score, int) or not 0 <= score <= 5:
+        raise OpenAIAnalysisError("semantic relevance score must be an integer from 0 to 5")
+
+    reason = _required_string(reason, "semantic_relevance.reason")
+
+    return SemanticRelevance(
+        score=score,
+        reason=reason,
+    )
 
 def analyze_paper_with_openai(
     config: AnalysisConfig,
