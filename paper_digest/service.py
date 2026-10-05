@@ -166,21 +166,33 @@ def generate_digest(
                 f"Broad retrieval keywords: {', '.join(feed.keywords)}"
             )
 
-            for paper in filtered:
+            batch_size = 10
+
+            for start in range(0, len(filtered), batch_size):
+                batch = filtered[start : start + batch_size]
+
                 try:
-                    relevance = judge_paper_relevance_with_openai(
+                    relevance_results = judge_papers_relevance_with_openai(
                         config.analysis,
-                        paper,
+                        batch,
                         research_interests=research_interests,
                     )
-                    paper.semantic_relevance_score = relevance.score
-                    paper.semantic_relevance_reason = relevance.reason
                 except OpenAIAnalysisError as exc:
                     print(
-                        f"[semantic-screening] skipped relevance judgment "
-                        f"for {paper.paper_id!r}: {exc}"
+                        f"[semantic-screening] skipped batch "
+                        f"{start // batch_size + 1}: {exc}"
                     )
                     continue
+
+                for paper in batch:
+                    relevance = relevance_results.get(paper.paper_id)
+
+                    if relevance is None:
+                        continue
+
+                    paper.semantic_relevance_score = relevance.score
+                    paper.semantic_relevance_reason = relevance.reason
+
             filtered = [
                 paper
                 for paper in filtered
