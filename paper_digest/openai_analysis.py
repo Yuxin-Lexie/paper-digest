@@ -180,10 +180,7 @@ def judge_papers_relevance_with_openai(
         )
 
         if paper_id not in expected_ids:
-            raise OpenAIAnalysisError(
-                f"semantic relevance returned unknown paper ID {paper_id!r}"
-            )
-
+            continue
         if paper_id in parsed_results:
             continue
 
