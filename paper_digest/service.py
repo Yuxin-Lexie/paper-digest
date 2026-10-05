@@ -177,12 +177,24 @@ def generate_digest(
                         batch,
                         research_interests=research_interests,
                     )
-                except OpenAIAnalysisError as exc:
+                except OpenAIAnalysisError as first_exc:
                     print(
-                        f"[semantic-screening] skipped batch "
-                        f"{start // batch_size + 1}: {exc}"
+                        f"[semantic-screening] retrying batch "
+                        f"{start // batch_size + 1}: {first_exc}"
                     )
-                    continue
+
+                    try:
+                        relevance_results = judge_papers_relevance_with_openai(
+                            config.analysis,
+                            batch,
+                            research_interests=research_interests,
+                        )
+                    except OpenAIAnalysisError as second_exc:
+                        print(
+                            f"[semantic-screening] skipped batch "
+                            f"{start // batch_size + 1} after retry: {second_exc}"
+                        )
+                        continue
 
                 for paper in batch:
                     relevance = relevance_results.get(paper.paper_id)
