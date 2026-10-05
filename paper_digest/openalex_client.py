@@ -246,7 +246,39 @@ def _topic_names(value: object) -> list[str]:
             names.append(display_name)
     return names
 
+def _extract_journal_source(
+    item: dict[str, object],
+) -> dict[str, object] | None:
+    """Return the most plausible journal source for an OpenAlex work."""
 
+    primary_location = item.get("primary_location")
+    if isinstance(primary_location, dict):
+        source = primary_location.get("source")
+        if _is_journal_source(source):
+            return source
+
+    locations = item.get("locations")
+    if isinstance(locations, list):
+        for location in locations:
+            if not isinstance(location, dict):
+                continue
+
+            source = location.get("source")
+            if _is_journal_source(source):
+                return source
+
+    return None
+
+
+def _is_journal_source(source: object) -> bool:
+    """Return whether an OpenAlex source looks like a journal."""
+
+    if not isinstance(source, dict):
+        return False
+
+    source_type = _string(source.get("type"))
+    return source_type == "journal"
+    
 def _resolve_abstract_url(item: dict[str, object]) -> str:
     for value in (
         _nested_string(item.get("primary_location"), "landing_page_url"),
