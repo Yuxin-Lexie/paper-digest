@@ -270,6 +270,7 @@ class AnalysisConfig:
     max_output_tokens: int
     language: str
     reasoning_effort: AnalysisReasoningEffort
+    research_profile: str = ""
     fail_on_error: bool = True
 
 
@@ -619,6 +620,9 @@ def _load_analysis(value: Any) -> AnalysisConfig | None:
             analysis.get("reasoning_effort", "minimal"),
             "analysis.reasoning_effort",
         ),
+        research_profile=str(
+            analysis.get("research_profile", "")
+        ).strip(),
         fail_on_error=_bool(
             analysis.get("fail_on_error", True),
             "analysis.fail_on_error",
