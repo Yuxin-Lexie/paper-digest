@@ -136,7 +136,8 @@ def generate_digest(
         # Use DeepSeek to judge semantic relevance of all broadly retrieved candidates.
         if config.analysis is not None:
             research_interests = (
-                f"Feed name: {feed.name}\n"
+                f"Overall research profile:\n{config.analysis.research_profile}\n\n"
+                f"Current feed: {feed.name}\n"
                 f"Search queries: {', '.join(feed.queries)}\n"
                 f"Broad retrieval keywords: {', '.join(feed.keywords)}"
             )
