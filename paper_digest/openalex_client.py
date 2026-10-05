@@ -105,29 +105,26 @@ def parse_openalex_work(item: dict[str, object]) -> Paper | None:
     short_id = _openalex_short_id(work_id)
     title = _string(item.get("display_name")) or _string(item.get("title")) or short_id
 
+        journal_source = _extract_journal_source(item)
+
     journal_name = _nested_string(
-        item.get("primary_location"),
-        "source",
+        journal_source,
         "display_name",
     )
     journal_id = _nested_string(
-        item.get("primary_location"),
-        "source",
+        journal_source,
         "id",
     )
     journal_issn = _nested_string(
-        item.get("primary_location"),
-        "source",
+        journal_source,
         "issn_l",
     )
     journal_is_core = _nested_bool(
-    item.get("primary_location"),
-    "source",
-    "is_core",
+        journal_source,
+        "is_core",
     )
     journal_is_in_doaj = _nested_bool(
-        item.get("primary_location"),
-        "source",
+        journal_source,
         "is_in_doaj",
     )
 
