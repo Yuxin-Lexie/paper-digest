@@ -33,7 +33,7 @@ from .feedback import (
 )
 from .openai_analysis import (
     OpenAIAnalysisError,
-    judge_paper_relevance_with_openai,
+    judge_papers_relevance_with_openai,
 )
 from .sources import fetch_feed_papers
 from .state import DigestState, dedupe_papers, load_state, save_state
