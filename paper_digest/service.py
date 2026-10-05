@@ -153,6 +153,12 @@ def generate_digest(
                 except OpenAIAnalysisError:
                     if config.analysis.fail_on_error:
                         raise
+            filtered = [
+                paper
+                for paper in filtered
+                if paper.semantic_relevance_score is None
+                or paper.semantic_relevance_score >= 2
+            ]
 
         filtered = apply_feedback_to_papers(
             filtered,
