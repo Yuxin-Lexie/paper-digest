@@ -175,9 +175,12 @@ def generate_digest(
                     )
                     paper.semantic_relevance_score = relevance.score
                     paper.semantic_relevance_reason = relevance.reason
-                except OpenAIAnalysisError:
-                    if config.analysis.fail_on_error:
-                        raise
+                except OpenAIAnalysisError as exc:
+                    print(
+                        f"[semantic-screening] skipped relevance judgment "
+                        f"for {paper.paper_id!r}: {exc}"
+                    )
+                    continue
             filtered = [
                 paper
                 for paper in filtered
