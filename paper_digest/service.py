@@ -124,6 +124,7 @@ def generate_digest(
             contact_email=contact_email,
             openalex_api_key=openalex_api_key,
         )
+
         filtered = filter_papers(
             papers,
             feed,
@@ -132,38 +133,42 @@ def generate_digest(
             ranking=config.ranking,
         )
 
-if config.analysis is not None:
-    research_interests = (
-        f"Feed name: {feed.name}\n"
-        f"Search queries: {', '.join(feed.queries)}\n"
-        f"Broad retrieval keywords: {', '.join(feed.keywords)}"
-    )
-
-    for paper in filtered:
-        try:
-            relevance = judge_paper_relevance_with_openai(
-                config.analysis,
-                paper,
-                research_interests=research_interests,
+        # Use DeepSeek to judge semantic relevance of all broadly retrieved candidates.
+        if config.analysis is not None:
+            research_interests = (
+                f"Feed name: {feed.name}\n"
+                f"Search queries: {', '.join(feed.queries)}\n"
+                f"Broad retrieval keywords: {', '.join(feed.keywords)}"
             )
-            paper.semantic_relevance_score = relevance.score
-            paper.semantic_relevance_reason = relevance.reason
-        except OpenAIAnalysisError:
-            if config.analysis.fail_on_error:
-                raise
-        
+
+            for paper in filtered:
+                try:
+                    relevance = judge_paper_relevance_with_openai(
+                        config.analysis,
+                        paper,
+                        research_interests=research_interests,
+                    )
+                    paper.semantic_relevance_score = relevance.score
+                    paper.semantic_relevance_reason = relevance.reason
+                except OpenAIAnalysisError:
+                    if config.analysis.fail_on_error:
+                        raise
+
         filtered = apply_feedback_to_papers(
             filtered,
             feedback_state=managed_feedback,
             config=config.feedback,
         )
+
         seen_before_today = set(managed_state.seen_papers.get(feed.name, {}))
+
         _record_focus_candidates(
             focus_candidates,
             papers=filtered,
             feed_name=feed.name,
             seen_before_today=seen_before_today,
         )
+
         filtered = dedupe_papers(
             managed_state,
             feed_name=feed.name,
@@ -171,24 +176,36 @@ if config.analysis is not None:
             now=local_now,
             retention_days=config.state.retention_days,
         )
+
         feed_papers: list[Paper] = []
+
         for paper in filtered:
             canonical_id = paper.canonical_id()
             existing = papers_by_canonical_id.get(canonical_id)
+
             if existing is None:
                 papers_by_canonical_id[canonical_id] = paper
                 candidate = focus_candidates.get(canonical_id)
+
                 if candidate is not None:
                     candidate.paper = paper
                     candidate.in_digest = True
+
                 feed_papers.append(paper)
                 continue
+
             existing.merge_duplicate(paper)
+
             candidate = focus_candidates.get(canonical_id)
             if candidate is not None:
                 candidate.paper = existing
                 candidate.in_digest = True
-        feed_papers.sort(key=lambda item: item.published_at, reverse=True)
+
+        feed_papers.sort(
+            key=lambda item: item.published_at,
+            reverse=True,
+        )
+
         feeds.append(
             FeedDigest(
                 name=feed.name,
@@ -204,9 +221,18 @@ if config.analysis is not None:
         feeds=feeds,
         template=config.digest.template,
     )
-    finalize_digest_scoring(digest, ranking=config.ranking)
+
+    finalize_digest_scoring(
+        digest,
+        ranking=config.ranking,
+    )
+
     if config.translation is not None:
-        enrich_digest_with_translation(config.translation, digest)
+        enrich_digest_with_translation(
+            config.translation,
+            digest,
+        )
+
     if config.analysis is not None:
         enrich_digest_with_analysis(
             config.analysis,
@@ -224,6 +250,7 @@ if config.analysis is not None:
             template=config.digest.template,
             topic_candidates=topic_candidates,
         )
+
     digest.focus_items = _build_focus_items(
         digest,
         config=config,
@@ -233,6 +260,7 @@ if config.analysis is not None:
         current_feed_names=_current_feed_names(digest),
         now=local_now,
     )
+
     action_items = _build_action_items(
         digest,
         config=config,
@@ -242,16 +270,20 @@ if config.analysis is not None:
         current_feed_names=_current_feed_names(digest),
         now=local_now,
     )
+
     digest.action_items = _select_action_notification_items(
         action_items,
         state=managed_state,
         now=local_now,
         max_items=config.notify.max_action_items,
     )
+
     if state is None:
         save_state(config.state, managed_state)
+
     if feedback_state is None:
         save_feedback(config.feedback, managed_feedback)
+
     return digest
 
 
