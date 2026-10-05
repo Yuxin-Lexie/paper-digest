@@ -185,9 +185,7 @@ def judge_papers_relevance_with_openai(
             )
 
         if paper_id in parsed_results:
-            raise OpenAIAnalysisError(
-                f"semantic relevance returned duplicate paper ID {paper_id!r}"
-            )
+            continue
 
         if not isinstance(score, int) or not 0 <= score <= 5:
             raise OpenAIAnalysisError(
