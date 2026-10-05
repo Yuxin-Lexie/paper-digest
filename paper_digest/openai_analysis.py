@@ -20,13 +20,16 @@ class SemanticRelevance:
     reason: str
 
 
-def judge_paper_relevance_with_openai(
+def judge_papers_relevance_with_openai(
     config: AnalysisConfig,
-    paper: Paper,
+    papers: list[Paper],
     *,
     research_interests: str,
-) -> SemanticRelevance:
-    """Judge semantic relevance of a paper to the configured research interests."""
+) -> dict[str, SemanticRelevance]:
+    """Judge semantic relevance of a batch of papers."""
+
+    if not papers:
+        return {}
 
     api_key = os.getenv(config.api_key_env)
     if not api_key:
@@ -34,18 +37,32 @@ def judge_paper_relevance_with_openai(
             f"analysis API key environment variable {config.api_key_env!r} is not set"
         )
 
+    paper_blocks: list[str] = []
+
+    for index, paper in enumerate(papers, start=1):
+        paper_blocks.append(
+            f"Paper {index}\n"
+            f"Paper ID: {paper.paper_id}\n"
+            f"{_build_input(paper)}"
+        )
+
     payload = {
         "model": config.model,
         "instructions": (
-            "You are screening academic papers for a research literature recommender. "
-            "Keywords are only a broad retrieval net and MUST NOT be treated as evidence "
-            "that a paper is relevant. Judge substantive semantic relevance from the "
-            "research question, constructs, population, theory, methods, and findings "
-            "described in the title and abstract. "
-            "Ignore accidental keyword overlap, such as a technical paper containing "
-            "'real-time use' when the research interest is human time use. "
-            "A paper may still be relevant even if it does not use exactly the same "
-            "terminology as the research interests. "
+            "You are screening a batch of academic papers for a research "
+            "literature recommender. "
+            "Judge EACH paper independently for substantive semantic relevance "
+            "to the research interests. "
+            "Keywords are only a broad retrieval net and MUST NOT be treated as "
+            "evidence that a paper is relevant. "
+            "Judge relevance from the actual research question, constructs, "
+            "population, theory, methods, and findings described in the title "
+            "and abstract. "
+            "Ignore accidental lexical overlap, such as a technical paper "
+            "containing 'real-time use' when the research interest is human "
+            "time use. "
+            "A paper may still be relevant when it uses terminology different "
+            "from the retrieval keywords. "
             "Use this scale: "
             "0 = unrelated or accidental lexical overlap; "
             "1 = only tangentially related; "
@@ -53,31 +70,49 @@ def judge_paper_relevance_with_openai(
             "3 = clearly relevant; "
             "4 = highly relevant; "
             "5 = directly central to the research interest. "
-            f"Write the reason in {config.language}. "
+            "Return exactly one result for every supplied Paper ID. "
+            "Do not omit papers. Do not invent Paper IDs. "
+            f"Write each reason in {config.language}. "
             "Return JSON only."
         ),
         "input": (
             f"Research interests:\n{research_interests}\n\n"
-            f"{_build_input(paper)}"
+            "Papers to screen:\n\n"
+            + "\n\n---\n\n".join(paper_blocks)
         ),
-        "max_output_tokens": 500,
+        "max_output_tokens": max(1000, len(papers) * 180),
         "text": {
             "format": {
                 "type": "json_schema",
-                "name": "semantic_relevance",
+                "name": "semantic_relevance_batch",
                 "strict": True,
                 "schema": {
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
-                        "score": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 5,
-                        },
-                        "reason": {"type": "string"},
+                        "results": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "paper_id": {"type": "string"},
+                                    "score": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 5,
+                                    },
+                                    "reason": {"type": "string"},
+                                },
+                                "required": [
+                                    "paper_id",
+                                    "score",
+                                    "reason",
+                                ],
+                            },
+                        }
                     },
-                    "required": ["score", "reason"],
+                    "required": ["results"],
                 },
             }
         },
@@ -101,7 +136,7 @@ def judge_paper_relevance_with_openai(
             raw_payload = response.read()
     except OSError as exc:
         raise OpenAIAnalysisError(
-            f"failed to judge relevance for paper {paper.paper_id!r}: {exc}"
+            f"failed to judge relevance for paper batch: {exc}"
         ) from exc
 
     response_json = _load_response_json(raw_payload)
@@ -111,24 +146,67 @@ def judge_paper_relevance_with_openai(
         raw_result = json.loads(response_text)
     except json.JSONDecodeError as exc:
         raise OpenAIAnalysisError(
-            "semantic relevance response was not valid JSON"
+            "semantic relevance batch response was not valid JSON"
         ) from exc
 
     if not isinstance(raw_result, dict):
-        raise OpenAIAnalysisError("semantic relevance payload is invalid")
+        raise OpenAIAnalysisError(
+            "semantic relevance batch payload is invalid"
+        )
 
-    score = raw_result.get("score")
-    reason = raw_result.get("reason")
+    raw_results = raw_result.get("results")
+    if not isinstance(raw_results, list):
+        raise OpenAIAnalysisError(
+            "semantic relevance batch results must be an array"
+        )
 
-    if not isinstance(score, int) or not 0 <= score <= 5:
-        raise OpenAIAnalysisError("semantic relevance score must be an integer from 0 to 5")
+    expected_ids = {paper.paper_id for paper in papers}
+    parsed_results: dict[str, SemanticRelevance] = {}
 
-    reason = _required_string(reason, "semantic_relevance.reason")
+    for item in raw_results:
+        if not isinstance(item, dict):
+            raise OpenAIAnalysisError(
+                "semantic relevance batch item is invalid"
+            )
 
-    return SemanticRelevance(
-        score=score,
-        reason=reason,
-    )
+        paper_id = _required_string(
+            item.get("paper_id"),
+            "semantic_relevance.paper_id",
+        )
+        score = item.get("score")
+        reason = _required_string(
+            item.get("reason"),
+            "semantic_relevance.reason",
+        )
+
+        if paper_id not in expected_ids:
+            raise OpenAIAnalysisError(
+                f"semantic relevance returned unknown paper ID {paper_id!r}"
+            )
+
+        if paper_id in parsed_results:
+            raise OpenAIAnalysisError(
+                f"semantic relevance returned duplicate paper ID {paper_id!r}"
+            )
+
+        if not isinstance(score, int) or not 0 <= score <= 5:
+            raise OpenAIAnalysisError(
+                "semantic relevance score must be an integer from 0 to 5"
+            )
+
+        parsed_results[paper_id] = SemanticRelevance(
+            score=score,
+            reason=reason,
+        )
+
+    missing_ids = expected_ids - set(parsed_results)
+    if missing_ids:
+        raise OpenAIAnalysisError(
+            "semantic relevance response omitted paper IDs: "
+            + ", ".join(sorted(missing_ids))
+        )
+
+    return parsed_results
 
 def analyze_paper_with_openai(
     config: AnalysisConfig,
