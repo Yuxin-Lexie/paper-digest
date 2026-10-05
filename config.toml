@@ -1,6 +1,6 @@
 [app]
 timezone = "Asia/Shanghai"
-lookback_hours = 240
+lookback_hours = 2160
 output_dir = "output"
 request_delay_seconds = 3
 request_timeout_seconds = 60
@@ -81,5 +81,5 @@ keywords = [
   "time management"
 ]
 exclude_keywords = []
-max_results = 30
+max_results = 100
 max_items = 5
