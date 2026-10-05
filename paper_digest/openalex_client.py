@@ -105,7 +105,7 @@ def parse_openalex_work(item: dict[str, object]) -> Paper | None:
     short_id = _openalex_short_id(work_id)
     title = _string(item.get("display_name")) or _string(item.get("title")) or short_id
 
-        journal_source = _extract_journal_source(item)
+    journal_source = _extract_journal_source(item)
 
     journal_name = _nested_string(
         journal_source,
