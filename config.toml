@@ -33,6 +33,26 @@ max_papers = 5
 max_output_tokens = 2000
 language = "Chinese"
 reasoning_effort = "low"
+research_profile = """
+The user is a psychology researcher broadly interested in how people regulate their behavior, goals, motivation, and time in everyday life.
+
+Core interests include:
+- self-regulation, self-control, goal pursuit, goal conflict, motivation, and related psychological processes;
+- how people allocate, experience, structure, and regulate time in daily life, including time use, time scarcity or time poverty, time pressure, temporal experience, and everyday planning;
+- how goals and motivation shape everyday behavior and decisions, especially outside narrowly defined traditional time-management research;
+- individual and social factors that influence these processes, when they provide useful psychological mechanisms or theoretical insight.
+
+Prioritize empirical research that:
+- examines psychological mechanisms, behavioral processes, individual differences, or social/interpersonal influences;
+- offers useful theoretical ideas, constructs, methods, measures, or findings for psychology research;
+- is substantively connected to the research interests even when it uses different terminology from the retrieval keywords.
+
+Adjacent research can still be relevant when it provides a clear conceptual or methodological connection to these interests.
+
+Do not treat keyword overlap alone as relevance. Strongly down-rank papers in unrelated technical, engineering, medical, or other domains when the matched term is incidental or has a different meaning.
+
+Judge relevance based primarily on the actual research question, constructs, theory, methods, and findings described in the title and abstract.
+"""
 fail_on_error = true
 
 [translation]
